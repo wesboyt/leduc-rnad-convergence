@@ -246,6 +246,136 @@ def c12(jobs):
     return num, rms[1] > 0.5 and nc_it > 1.2 * nc_qre and t_ref < 2000
 
 
+# ---- C13-C20: the previously untested hypotheses (criteria fixed before the first run) ---------------------------
+_EX = dict(steps=30000, alpha=A02, K=500, zfloor=20.0, score_every=1000)
+
+
+def c13(jobs):
+    """SCHEDULE-FREE MECHANISM (exact, table): schedule-free SGD (interpolation beta 0.9) fails (> 1.0) on the same
+    objective and learning rates at which plain SGD converges (< 0.2): the failure is schedule-free's averaging /
+    interpolation, not Adam's normalisation."""
+    arms = {"sgd_lr0.1": dict(_EX, opt="sgd", pg="softmax", lr=0.1),
+            "sfsgd_lr0.1": dict(_EX, opt="sfsgd", pg="softmax", lr=0.1, betas=(0.9, 0.999)),
+            "sfsgd_lr0.03": dict(_EX, opt="sfsgd", pg="softmax", lr=0.03, betas=(0.9, 0.999))}
+    names = list(arms)
+    res = pmap(run_grad, [arms[n] for n in names], jobs)
+    num = {n: _last(c, 5) for n, c in zip(names, res)}
+    return num, num["sgd_lr0.1"] < 0.2 and num["sfsgd_lr0.1"] > 1.0 and num["sfsgd_lr0.03"] > 1.0
+
+
+def c14(jobs):
+    """DOSE-RESPONSE (exact, table): for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01), NashConv at
+    interpolation beta = 0.9 is > 5x that at beta = 0 (where schedule-free acts at its base iterate), and beta = 0
+    itself converges (< 0.3)."""
+    arms = {}
+    for b in (0.0, 0.5, 0.9):
+        arms[f"sfsgd_b{b}"] = dict(_EX, opt="sfsgd", pg="softmax", lr=0.1, betas=(b, 0.999))
+        arms[f"sfadamw_b{b}"] = dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(b, 0.999))
+    names = list(arms)
+    res = pmap(run_grad, [arms[n] for n in names], jobs)
+    num = {n: _last(c, 5) for n, c in zip(names, res)}
+    ok = all(num[f"{o}_b0.9"] > 5 * num[f"{o}_b0.0"] and num[f"{o}_b0.0"] < 0.3 for o in ("sfsgd", "sfadamw"))
+    return num, ok
+
+
+_NET = dict(steps=30000, alpha=A02, K=5000, zfloor=20.0, score_every=1000, policy="mlp", pg="neurd",
+            logit_threshold=2.0, lr=1e-3)
+
+
+def c15(jobs):
+    """SHARED-WEIGHT NETWORK (exact values, the regime of LLM policy training: normalisation per WEIGHT): mean
+    NashConv over the last 10k of 30k steps, 3 seeds. Schedule-free AdamW (beta 0.9) is > 2x worse than Adam with
+    beta1 = 0, and Adam with beta1 = 0.9 is worse than beta1 = 0."""
+    arms = {"adam_b1_0": dict(opt="adam", betas=(0.0, 0.999)), "adam_b1_0.9": dict(opt="adam", betas=(0.9, 0.999)),
+            "sfadamw_b0.9": dict(opt="sfadamw", betas=(0.9, 0.999)), "sfadamw_b0": dict(opt="sfadamw", betas=(0.0, 0.999))}
+    items, keys = [], []
+    for n, kw in arms.items():
+        for sd in (0, 1, 2):
+            items.append(dict(_NET, seed=sd, **kw))
+            keys.append(n)
+    res = pmap(run_grad, items, jobs)
+    num = {}
+    for n in arms:
+        vals = [_last(c, 10) for k, c in zip(keys, res) if k == n]
+        num[n] = sum(vals) / len(vals)
+        num[n + "_per_seed"] = vals
+    return num, num["sfadamw_b0.9"] > 2 * num["adam_b1_0"] and num["adam_b1_0.9"] > num["adam_b1_0"]
+
+
+def c16(jobs):
+    """SCHEDULE-FREE IN THE SAMPLED RULE: schedule-free SGD with SGD's learning rate (10) and everything else as the
+    converging SGD arm of C9 ends > 1.0 on both seeds (16k steps); SGD ends < 0.6 (C9)."""
+    import ladder as L
+    base = L.GRIDS["p4"]["Q_sgd_anneal"]
+    res = pmap(run_sampled, [(dict(base, optimizer="sfsgd", beta1=0.9), 16000, s) for s in (1, 2)], jobs)
+    num = {"sfsgd_final": [c[-1]["nashconv"] for c in res], "sfsgd_reach_avg": [c[-1]["reach_avg"] for c in res]}
+    return num, min(num["sfsgd_final"]) > 1.0
+
+
+def c17(jobs):
+    """OPTIMISM / EXTRAGRADIENT (exact, table; Daskalakis & Panageas, Lee et al., Cen et al., Gidel et al.):
+    (a) optimism improves Adam beta1 0.9 (softmax PG, lr 0.003) by > 2x; (b) optimism does NOT rescue schedule-free
+    AdamW (lr 0.01 stays > 1.0); (c) extragradient stabilises softmax-PG SGD at lr 0.3 (< 0.1)."""
+    arms = {"adam_b0.9": dict(_EX, opt="adam", pg="softmax", lr=0.003, betas=(0.9, 0.999)),
+            "adam_b0.9_optimistic": dict(_EX, opt="adam", pg="softmax", lr=0.003, betas=(0.9, 0.999), optimistic=True),
+            "sfadamw": dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(0.9, 0.999)),
+            "sfadamw_optimistic": dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(0.9, 0.999), optimistic=True),
+            "sgd_lr0.3": dict(_EX, opt="sgd", pg="softmax", lr=0.3),
+            "sgd_lr0.3_extragradient": dict(_EX, opt="sgd", pg="softmax", lr=0.3, extragradient=True)}
+    names = list(arms)
+    res = pmap(run_grad, [arms[n] for n in names], jobs)
+    num = {n: _last(c, 5) for n, c in zip(names, res)}
+    a = num["adam_b0.9_optimistic"] < 0.5 * num["adam_b0.9"]
+    b = num["sfadamw_optimistic"] > 1.0
+    cc = num["sgd_lr0.3_extragradient"] < 0.1
+    num.update({"a_optimism_helps_adam": a, "b_optimism_does_not_rescue_sf": b, "c_extragradient_stabilises": cc})
+    return num, a and b and cc
+
+
+def _sampled_pair(over_a, over_b, steps, jobs):
+    import ladder as L
+    base = L.GRIDS["p4"]["Q_sgd_anneal"]
+    items = [(dict(base, **over_a), steps, s) for s in (1, 2)] + [(dict(base, **over_b), steps, s) for s in (1, 2)]
+    res = pmap(run_sampled, items, jobs)
+    fa = [_last(c, 4) for c in res[:2]]
+    fb = [_last(c, 4) for c in res[2:]]
+    return fa, fb, res
+
+
+def c18(jobs):
+    """APMD's NOISY-FEEDBACK PRESCRIPTION in the sampled rule (Abe et al. 2024): learning rate restarted at every
+    slingshot (magnet) update and decayed as lr / (1 + s / 500), slingshot interval T^(4/5) ~ 4000 for T = 32k. Mean
+    of the last 2k steps (2 seeds) is < 0.8x the same interval with a constant learning rate, and < 0.25."""
+    fa, fb, _ = _sampled_pair(dict(refine_period=4000, inner_lr_tau=500.0), dict(refine_period=4000), 32000, jobs)
+    ma, mb = sum(fa) / 2, sum(fb) / 2
+    num = {"apmd_last2k": fa, "constant_lr_last2k": fb, "apmd_mean": ma, "constant_mean": mb}
+    return num, ma < 0.8 * mb and ma < 0.25
+
+
+def c19(jobs):
+    """THE DEEPNASH RECIPE in the sampled rule: Adam beta1 = 0, magnet interpolation alpha_n = min(1, 2n/K), NeuRD
+    threshold 2, long inner phase K = 4000 (32k steps, 2 seeds): mean of the last 2k steps < 0.5; the same recipe with
+    schedule-free AdamW (beta 0.9) is > 2x worse."""
+    rec = dict(optimizer="adam", beta1=0.0, lr=0.003, magnet_interp=True, neurd_threshold=2.0, refine_period=4000)
+    fa, fb, _ = _sampled_pair(rec, dict(rec, optimizer="sfadamw", beta1=0.9), 32000, jobs)
+    ma, mb = sum(fa) / 2, sum(fb) / 2
+    num = {"deepnash_adam_b0": fa, "deepnash_sfadamw": fb, "adam_mean": ma, "sfadamw_mean": mb}
+    return num, ma < 0.5 and mb > 2 * ma
+
+
+def c20(jobs):
+    """TEMPERATURE ANNEALING instead of a moving magnet (Sokota et al. 2023) in the sampled rule: uniform magnet never
+    refreshed, eta_reg annealed geometrically 0.2 -> 0.02 over 32k steps, SGD (2 seeds): mean of the last 2k steps
+    < 0.25."""
+    import ladder as L
+    base = L.GRIDS["p4"]["Q_sgd_anneal"]
+    over = dict(refine_period=10 ** 9, reg_max_period=10 ** 9, eta_reg_end=0.02, eta_reg_anneal=32000)
+    res = pmap(run_sampled, [(dict(base, **over), 32000, s) for s in (1, 2)], jobs)
+    f = [_last(c, 4) for c in res]
+    num = {"anneal_last2k": f, "mean": sum(f) / 2, "reach_avg": [c[-1]["reach_avg"] for c in res]}
+    return num, num["mean"] < 0.25
+
+
 # claim -> [(paper, relation)]; relation: CONFIRMED (the paper's prediction reproduces) | BOUNDARY (the guarantee does
 # not carry over once a named hypothesis is dropped: refutes an EXTRAPOLATION, not the paper). docs/PAPERS.md.
 PAPERS = {
@@ -269,11 +399,25 @@ PAPERS = {
     "C11": [],
     "C12": [("Perolat+ 2021", "BOUNDARY: a short refresh clock vs a slow sampled inner solve"),
             ("Abe+ 2024 APMD", "BOUNDARY: heterogeneous per-information-set noise, one constant step")],
+    "C13": [("Defazio+ 2024 schedule-free", "BOUNDARY: averaging/interpolation breaks last-iterate game dynamics"),
+            ("Sokota+ 2023 MMD", "BOUNDARY: the objective needs a mirror-like step")],
+    "C14": [("Defazio+ 2024 schedule-free", "BOUNDARY: dose-response in the interpolation parameter")],
+    "C15": [("Perolat+ 2022 DeepNash", "test: momentum-free Adam (DeepNash's b1 = 0) vs schedule-free with a network"),
+            ("Feng, Ou & Wang 2026 (Adam ODE in zero-sum games)", "test: momentum role in games, network policy")],
+    "C16": [("Defazio+ 2024 schedule-free", "BOUNDARY: schedule-free SGD under sampled feedback")],
+    "C17": [("Daskalakis & Panageas 2018; Lee+ 2021; Cen+ 2023", "test: optimism"),
+            ("Gidel+ 2019 VI", "test: extragradient"), ("Daskalakis+ 2018 Optimistic Adam", "test: optimism vs schedule-free")],
+    "C18": [("Abe+ 2024 APMD", "test: the noisy-feedback learning-rate and slingshot-interval prescription")],
+    "C19": [("Perolat+ 2022 DeepNash", "test: the full recipe (b1 = 0, interpolation, threshold, long phases)")],
+    "C20": [("Sokota+ 2023 MMD", "test: temperature annealing instead of a moving magnet")],
 }
 
 CLAIMS = {"C1": (c1, "1 min"), "C2": (c2, "15 s"), "C3": (c3, "4 min"), "C4": (c4, "4 min"), "C5": (c5, "4 min"),
           "C6": (c6, "10 min / 4 jobs"), "C7": (c7, "4 min"), "C8": (c8, "3 min"), "C9": (c9, "15 min / 4 jobs"),
-          "C10": (c10, "15 min / 4 jobs"), "C11": (c11, "3 min"), "C12": (c12, "8 min")}
+          "C10": (c10, "15 min / 4 jobs"), "C11": (c11, "3 min"), "C12": (c12, "8 min"),
+          "C13": (c13, "4 min"), "C14": (c14, "6 min"), "C15": (c15, "15 min / 8 jobs"), "C16": (c16, "8 min"),
+          "C17": (c17, "6 min"), "C18": (c18, "30 min / 4 jobs"), "C19": (c19, "30 min / 4 jobs"),
+          "C20": (c20, "30 min / 2 jobs")}
 
 
 def main():

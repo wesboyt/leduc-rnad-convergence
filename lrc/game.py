@@ -109,12 +109,12 @@ class ToyGame:
             nodes.append(dict(kind="T", street=street, u0=u0))
             return nid
 
-        def rec(street, commit, raises, actor, acts_in_round):
+        def rec(street, commit, raises, actor, acts_in_round, hist=""):
             facing = max(commit) - commit[actor]
             kinds = ([A_FOLD] if facing > 0 else []) + [A_CALL] + ([A_RAISE] if raises < self.max_raises else [])
             nid = len(nodes)
             nd = dict(kind="D", actor=actor, street=street, nA=len(kinds), kinds=kinds, children=[], row0=None,
-                      actor_commit=commit[actor])
+                      actor_commit=commit[actor], hist=hist, facing=facing > 0, can_raise=raises < self.max_raises)
             nodes.append(nd)
             for a in kinds:
                 c2 = list(commit)
@@ -123,14 +123,14 @@ class ToyGame:
                 elif a == A_CALL:
                     c2[actor] += facing
                     if not (facing > 0 or acts_in_round >= 1):
-                        ch = rec(street, c2, raises, 1 - actor, acts_in_round + 1)
+                        ch = rec(street, c2, raises, 1 - actor, acts_in_round + 1, hist + "c")
                     elif street + 1 < self.n_streets_game:
-                        ch = rec(street + 1, c2, 0, 0, 0)
+                        ch = rec(street + 1, c2, 0, 0, 0, hist + "c/")
                     else:
                         ch = terminal(street, c2, None)
                 else:
                     c2[actor] += facing + self.raise_sizes[street]
-                    ch = rec(street, c2, raises + 1, 1 - actor, acts_in_round + 1)
+                    ch = rec(street, c2, raises + 1, 1 - actor, acts_in_round + 1, hist + "r")
                 nd["children"].append(ch)
             return nid
 

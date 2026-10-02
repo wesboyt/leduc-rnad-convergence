@@ -219,34 +219,41 @@ def per_entry(game, x):
 
 def grad_run(game, steps=30000, opt="sgd", pg="softmax", lr=0.1, alpha=0.2, tau_u=0.0, K=500, zfloor=0.0,
              magnet="refresh", score_every=1000, log=None, betas=(0.9, 0.999), eps=1e-8, row_weight="uniform",
-             own_reach_weight=False):
-    """ the SAME exact full-width objective as mmd(soft=False) but moved by a gradient optimizer on logits.
-    Advantage (the baseline's form, anchor at the node only):  A = q - alpha*(log pi - log rho) - tau_u*(log pi - log u)
+             own_reach_weight=False, policy="table", hidden=64, seed=0, optimistic=False, extragradient=False,
+             warmup=100, logit_threshold=0.0):
+    """The SAME exact full-width objective as mmd(soft=False), moved by a gradient optimizer.
+    Advantage (node-only anchor):  A = q - alpha*(log pi - log rho) - tau_u*(log pi - log u)
     pg='softmax': loss gradient on logits = -pi*(A - E_pi A)   (PPO / softmax policy gradient at ratio 1)
     pg='neurd'  : loss gradient on logits = -(A - mean A)      (NeuRD: R-NaD's update)
-    Every row weighted equally (the baseline's IS + node correction aims at that). opt: sgd | adam | sfadamw."""
+    Every row weighted equally (or by counterfactual reach: row_weight='cfr').
+    policy: 'table' (one logit per entry) | 'mlp' (shared network over information-set features, lrc/policy.py).
+    opt: sgd | adam | sfadamw | sfsgd (betas[0] = momentum / schedule-free interpolation).
+    optimistic: feed 2 g_t - g_{t-1}. extragradient (sgd only): gradient at the look-ahead point theta - lr g.
+    logit_threshold beta > 0: DeepNash's NeuRD threshold -- the logit gradient is zeroed where the row-centred logit is
+    already beyond +-beta and the update would push it further."""
     import torch
+    from lrc.policy import MLPPolicy, Optimism, make_optimizer
     g = game.g
     a_e, t_e = per_entry(game, alpha), per_entry(game, tau_u)
     log_u = np.log(g.uniform())
     log_rho = log_u.copy()
-    theta = torch.zeros(game.E, dtype=torch.float64, requires_grad=True)
-    if opt == "sgd":
-        o = torch.optim.SGD([theta], lr=lr)
-    elif opt == "adam":
-        o = torch.optim.Adam([theta], lr=lr, betas=betas, eps=eps)
-    elif opt == "sfadamw":
-        import schedulefree
-        o = schedulefree.AdamWScheduleFree([theta], lr=lr, warmup_steps=100, betas=betas, weight_decay=0.0, eps=eps)
-        o.train()
+    if policy == "table":
+        theta = torch.zeros(game.E, dtype=torch.float64, requires_grad=True)
+        params = [theta]
+        logits_fn = lambda: theta  # noqa: E731
     else:
-        raise ValueError(opt)
+        net = MLPPolicy(g, hidden=hidden, seed=seed)
+        params = list(net.parameters())
+        logits_fn = net
+    o = make_optimizer(params, opt, lr, betas=betas, eps=eps, warmup=warmup)
+    optim = Optimism(params) if optimistic else None
     row = g.entry_row
     cnt = np.bincount(row, minlength=game.R)[row]
-    curve = []
-    t0 = time.time()
-    for t in range(1, steps + 1):
-        z = game.normalise_log(theta.detach().numpy().copy())
+
+    def logit_grad(zlog):
+        if logit_threshold > 0:
+            zc = zlog - np.bincount(row, weights=zlog, minlength=game.R)[row] / cnt
+        z = game.normalise_log(zlog)
         if zfloor > 0:
             z = game.normalise_log(np.maximum(z, -zfloor))
         p = np.exp(z)
@@ -259,18 +266,51 @@ def grad_run(game, steps=30000, opt="sgd", pg="softmax", lr=0.1, alpha=0.2, tau_
         else:
             ma = np.bincount(row, weights=A, minlength=game.R)[row] / cnt
             gr = -(A - ma)
-        if row_weight == "cfr":        # on-policy pivots + hero-reach IS -> expected step per row ~ cf reach
+        if logit_threshold > 0:      # loss gradient < 0 raises the logit
+            gr = np.where(((zc > logit_threshold) & (gr < 0)) | ((zc < -logit_threshold) & (gr > 0)), 0.0, gr)
+        if row_weight == "cfr":
             cf = vals["cfr"]
             cf_row = np.bincount(row, weights=cf, minlength=game.R)[row] / cnt
             gr = gr * cf_row / cf_row[cf_row > 0].mean()
+        return gr, p
+
+    gscale = 1.0 if policy == "table" else 1.0 / game.R    # mlp: loss = MEAN over information sets (as the sampled
+                                                             # rule's loss is a mean over pivots); a table is per-entry
+
+    def backprop(gr):
         o.zero_grad()
-        theta.grad = torch.as_tensor(gr)
+        lg = logits_fn()
+        lg.backward(gradient=torch.as_tensor(gr * gscale))
+
+    curve = []
+    t0 = time.time()
+    for t in range(1, steps + 1):
+        with torch.no_grad():
+            zl = logits_fn().detach().numpy().copy()
+        gr, p = logit_grad(zl)
+        if extragradient:
+            if opt != "sgd":
+                raise ValueError("extragradient is implemented for sgd only")
+            saved = [q_.detach().clone() for q_ in params]
+            backprop(gr)
+            with torch.no_grad():
+                for q_ in params:
+                    q_.add_(q_.grad, alpha=-lr)
+                zl2 = logits_fn().detach().numpy().copy()
+            gr2, _ = logit_grad(zl2)
+            with torch.no_grad():
+                for q_, s_ in zip(params, saved):
+                    q_.copy_(s_)
+            backprop(gr2)
+        else:
+            backprop(gr)
+        if optim is not None:
+            optim.apply()
         o.step()
         if magnet == "refresh" and t % K == 0:
-            zz = theta.detach().numpy()
-            if opt == "sfadamw":          # the magnet is the policy that ACTS (train-mode y), as in baseline
-                pass
-            log_rho = game.normalise_log(zz.copy())
+            with torch.no_grad():
+                zz = logits_fn().detach().numpy().copy()
+            log_rho = game.normalise_log(zz)
             if zfloor > 0:
                 log_rho = game.normalise_log(np.maximum(log_rho, -zfloor))
         if t % score_every == 0 or t == steps:

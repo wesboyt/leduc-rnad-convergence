@@ -78,6 +78,12 @@ def defaults():
         # refresh copies a NOISY iterate into the magnet. magnet_avg 'mean' = the magnet is the mean policy over the
         # second half of the inner phase (fixed refine rule); inner_lr_tau T > 0 = lr * T / (T + steps since refine).
         magnet_avg="last", inner_lr_tau=0.0,
+        # the untested prescriptions (docs/PAPERS.md): optimizer 'sfsgd' (schedule-free SGD; beta1 = its interpolation);
+        # optimistic: feed 2 g_t - g_{t-1}; magnet_interp: DeepNash's alpha_n = min(1, 2 n / K) mixture of the last two
+        # magnets; neurd_threshold beta > 0: zero the logit gradient where the row-centred logit is beyond +-beta and
+        # would be pushed further (DeepNash beta = 2); eta_reg_end / eta_reg_anneal: eta_reg decays geometrically to
+        # eta_reg_end over eta_reg_anneal steps (temperature annealing, with a fixed magnet when refine is off)
+        optimistic=False, magnet_interp=False, neurd_threshold=0.0, eta_reg_end=None, eta_reg_anneal=0,
     )
 
 
@@ -100,20 +106,12 @@ class Harness:
         self.n_streets = len(g.buckets)
         torch.manual_seed(cfg["seed"])
         self.logits = torch.zeros(self.E, dtype=torch.float64, requires_grad=True)
-        if cfg["optimizer"] == "sfadamw":
-            import schedulefree
-            self.opt = schedulefree.AdamWScheduleFree([self.logits], lr=cfg["lr"], warmup_steps=cfg["warmup"],
-                                                      betas=(cfg["beta1"], cfg["beta2"]), weight_decay=0.0,
-                                                      eps=cfg["adam_eps"])
-            self.opt.train()
-        elif cfg["optimizer"] == "adam":
-            self.opt = torch.optim.Adam([self.logits], lr=cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]),
-                                        eps=cfg["adam_eps"])
-        elif cfg["optimizer"] == "sgd":
-            self.opt = torch.optim.SGD([self.logits], lr=cfg["lr"])
-        else:
-            raise ValueError(cfg["optimizer"])
+        from lrc.policy import Optimism, make_optimizer
+        self.opt = make_optimizer([self.logits], cfg["optimizer"], cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]),
+                                  eps=cfg["adam_eps"], warmup=cfg["warmup"])
+        self.optimism = Optimism([self.logits]) if cfg["optimistic"] else None
         self.reg_logits = self.logits.detach().clone()
+        self.prev_reg_logits = None
         self.avg_logits = self.logits.detach().clone()
         self.avg_wsum = 0.0
         self.S = np.zeros(self.E)                      # Thm 9 accumulator
@@ -283,13 +281,14 @@ class Harness:
         theta_log = torch.nan_to_num(torch.log_softmax(torch.where(mask, theta_all, neg), dim=1),
                                      nan=LOG_FLOOR, neginf=LOG_FLOOR)
         tl = theta_log.detach().numpy()
-        rl = np.log(np.maximum(self.probs_of(self.reg_logits)[ent_idx], 1e-300))
+        mag = self.magnet_probs(t)
+        rl = np.log(np.maximum(mag[ent_idx], 1e-300))
         rl = np.where(valid, np.maximum(rl, LOG_FLOOR), LOG_FLOOR)
         log_unif = np.where(valid, -np.log(k), 0.0)
         pull = 1.0 if c["pull_anneal"] <= 0 else max(0.0, 1.0 - t / float(c["pull_anneal"]))
         unif_anchor = c["eta_unif"] * pull * (tl - log_unif)
         if c["reg_outer"]:
-            primary = np.clip(c["eta_reg"] * (tl - rl), -c["anchor_clip_z"], c["anchor_clip_z"])
+            primary = np.clip(self.eta_reg_now(t) * (tl - rl), -c["anchor_clip_z"], c["anchor_clip_z"])
         else:
             primary = np.zeros_like(tl)
         if c["anchor_units"] == "bb":
@@ -311,7 +310,7 @@ class Harness:
         ent = -(pi * theta_log * vmask).sum(1)
         ent = ent * torch.as_tensor(np.minimum(ref_sig[streets] / sig[streets], c["ent_scale_max"]))
         entropy_loss = -c["alpha_ent"] * pull * (ent * w_t).sum() / dw_sum
-        _refp = self.probs_of(self.reg_logits) if c["ref_target"] == "reg" else self.ref_probs
+        _refp = mag if c["ref_target"] == "reg" else self.ref_probs
         ref_pi = torch.as_tensor(np.where(valid, _refp[ent_idx], 0.0))
         ref_pi = ref_pi / ref_pi.sum(1, keepdim=True).clamp(min=1e-8)
         ref_log = torch.log(ref_pi.clamp(min=1e-300))
@@ -338,6 +337,17 @@ class Harness:
                 _gn = self.logits.grad.norm()
                 if _gn > 0:
                     self.logits.grad.mul_(c["grad_norm"] / _gn)
+        if c["neurd_threshold"] > 0:
+            with torch.no_grad():
+                zt = self.logits.detach().numpy()
+                cnt = np.bincount(self.g.entry_row, minlength=len(self.g.row_base))[self.g.entry_row]
+                zc = zt - np.bincount(self.g.entry_row, weights=zt, minlength=len(self.g.row_base))[self.g.entry_row] / cnt
+                gr = self.logits.grad.numpy()
+                b = c["neurd_threshold"]
+                kill = ((zc > b) & (gr < 0)) | ((zc < -b) & (gr > 0))
+                self.logits.grad[torch.as_tensor(kill)] = 0.0
+        if self.optimism is not None:
+            self.optimism.apply()
         self.opt.step()
         if c["logit_floor"] > 0:
             with torch.no_grad():
@@ -376,8 +386,10 @@ class Harness:
                 self.mag_n += 1
             if plateau or since >= c["reg_max_period"]:
                 if c["magnet_avg"] == "mean" and self.mag_n > 0:
+                    self.prev_reg_logits = self.reg_logits
                     self.reg_logits = torch.as_tensor(np.log(np.maximum(self.mag_sum / self.mag_n, 1e-300)))
                 else:
+                    self.prev_reg_logits = self.reg_logits
                     self.reg_logits = self.logits.detach().clone()
                 self.mag_sum, self.mag_n = None, 0
                 self.last_refine, self.reg_hist, refined = t, [], True
@@ -391,6 +403,23 @@ class Harness:
                 "noise_var": [float(noise_var[streets == s].sum() / max(vf[streets == s].sum(), 1))
                               for s in range(self.n_streets)],
                 "eps": self.eps_now(), "refined": refined}
+
+    def magnet_probs(self, t):
+        """The magnet the anchors use at step t: pi_reg, or DeepNash's interpolation
+        alpha_n * pi_reg + (1 - alpha_n) * pi_reg_prev with alpha_n = min(1, 2 n / K), n = steps since the refresh."""
+        cur = self.probs_of(self.reg_logits)
+        c = self.c
+        if not c["magnet_interp"] or self.prev_reg_logits is None:
+            return cur
+        a = min(1.0, 2.0 * (t - self.last_refine) / float(c["refine_period"]))
+        return a * cur + (1.0 - a) * self.probs_of(self.prev_reg_logits)
+
+    def eta_reg_now(self, t):
+        c = self.c
+        if not c["eta_reg_anneal"] or c["eta_reg_end"] is None:
+            return c["eta_reg"]
+        f = min(1.0, t / float(c["eta_reg_anneal"]))
+        return c["eta_reg"] * (c["eta_reg_end"] / c["eta_reg"]) ** f
 
     def score(self):
         cur = self.g.exploitability(self.probs_of(self.logits))
