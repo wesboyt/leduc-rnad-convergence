@@ -298,3 +298,7 @@ negative momentum); Lee, Kroer & Luo 2021; Cen et al. 2023; Hennes et al. 2020 (
 relative to minimisation); Munos et al. 2024 (NLHF / Nash-MD); Wu et al. 2024 (SPPO); Shao et al. 2024 (GRPO); Schulman
 et al. 2017 (PPO); "Steering Equilibrium Selection in Regularized Self-Play" (arXiv 2609.19820, the reference policy as
 an equilibrium-selection lever). Full references with links: `README.md` and `docs/PAPERS.md`.
+
+---
+
+*This paper and the documentation in `docs/` are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); the code under the MIT licence (`LICENSE`).*

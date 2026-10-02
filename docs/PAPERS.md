@@ -101,7 +101,7 @@ No experiment here contradicts a theorem within its hypotheses.
 * **Hypotheses.** Minimisation.
 * **Here.**
   - CONFIRMED in the designed regime: on the linearised field with $\omega = 0$ both variants converge (C22).
-  - BOUNDARY, the main finding of `docs/WHITEPAPER.md`:
+  - BOUNDARY, the main finding of `WHITEPAPER.md`:
     - with any rotation ($\omega \ge 3$, $\lambda = 1$) both diverge at a step where SGD converges (C22);
     - on Leduc both fail on the exact objective where SGD and the mirror step converge (C13, C6);
     - the failure turns on with $\beta$ (C14);

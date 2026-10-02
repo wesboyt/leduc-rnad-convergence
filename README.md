@@ -1,11 +1,18 @@
-# leduc-rnad-convergence
+# Schedule-Free Shortcomings in Relation to Relative-Regret RL Algorithms
 
-**When does regularised self-play converge to a Nash equilibrium, and why does a practical sampled rule not?**
+**Read the paper: [WHITEPAPER.md](WHITEPAPER.md)** · Code and every experiment: this repository
+
+## Abstract
+
+Regularised learning dynamics are the standard route to Nash equilibria in two-player zero-sum games: regret and policy-gradient updates pulled toward a slowly moving reference policy (R-NaD, magnetic mirror descent, APMD). The same structure (an action's value relative to a baseline over its alternatives, a softmax policy, a KL penalty toward a reference, periodic reference updates) underlies PPO and GRPO and the game-structured variants used to train large language models, such as Nash learning from human feedback and self-play preference optimisation. Convergence theory assumes mirror or gradient steps; practice uses AdamW and, increasingly, schedule-free optimisers. On two-player Leduc hold'em, where exploitability is computed exactly, we find that schedule-free SGD and schedule-free AdamW fail on an identical objective where plain SGD and a mirror step converge (NashConv 3.0-7.2 versus 0.06 and 0.011); that the failure is switched on by schedule-free's interpolation parameter (beta near 0 converges, the default 0.9 does not); that the averaged iterate fails as badly as the acting point; and that the effect persists with sampled values, inside the DeepNash recipe, and, more weakly, with a shared-weight network. In the linearised regularised game both schedule-free variants converge in pure minimisation and diverge once the rotational part exceeds three times the regularisation, at step sizes where SGD is stable. We also show that the timing of reference updates is convergence-critical, and that APMD's noisy-feedback schedule lowers a sampled rule's exploitability floor by 40%. All 23 claims were registered with refutation criteria before being run; four were refuted and are reported.
+
+---
+
+## The repository
+
 This repository studies one sampled, regularised policy-gradient rule of the R-NaD family. Each piece is measured
 against an exact ruler (NashConv over all 120 deals of 2-player Leduc hold'em) and an exact reference solver that
 provably converges.
-
-**Paper: [Schedule-Free Shortcomings in Relation to Relative-Regret RL Algorithms](docs/WHITEPAPER.md).**
 
 Everything is self-contained: the game, the exact evaluator, the reference solver, the sampled rule, the audits, the
 experiment grids and a claim-by-claim reproduction script with pre-stated refutation criteria. Dependencies: numpy,
@@ -60,7 +67,7 @@ python experiments/ladder.py --grid p4 --steps 16000 --seeds 1,2 --jobs 4 && pyt
 | `lrc/policy.py` | table and shared-weight MLP policies; SGD / Adam / schedule-free AdamW / schedule-free SGD; gradient-level optimism |
 | `experiments/` | `ladder.py` (sampled-rule grids), `mmd_grid.py` (reference grids), `sf_linear.py` (optimisers on the linearised regularised game), `fixedpoint_probe.py`, `refresh_error.py`, `audit_harness.py`, `mmd_summary.py` |
 | `reproduce.py` | claims C1–C23 with pre-stated refutation criteria |
-| `docs/WHITEPAPER.md` | the paper: schedule-free shortcomings in relative-regret RL algorithms, the mechanism, and the connection to PPO / GRPO / Nash-MD / SPPO |
+| `WHITEPAPER.md` | the paper: schedule-free shortcomings in relative-regret RL algorithms, the mechanism, and the connection to PPO / GRPO / Nash-MD / SPPO |
 | `docs/ALGORITHM.md` | the game, the regularised game, the reference, the gradient learners and the sampled rule in notation |
 | `docs/TIMING.md` | the timing issues T1–T5 and their relation to the literature |
 | `docs/CLAIMS.md` | claims, original evidence, criteria, revision log, rejected hypotheses |
@@ -143,4 +150,4 @@ python experiments/ladder.py --grid p4 --steps 16000 --seeds 1,2 --jobs 4 && pyt
 
 ## Licence
 
-No licence has been chosen yet. Add one before publishing.
+Code: [MIT](LICENSE). The paper (`WHITEPAPER.md`) and the documentation in `docs/`: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
