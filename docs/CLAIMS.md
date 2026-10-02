@@ -27,7 +27,7 @@ criterion, prints **SUPPORTED** or **REFUTED** with the numbers it used, and wri
 
 ## Claims C13–C23: the previously untested hypotheses and the schedule-free mechanism
 
-Registered in git before their first run (commits `d2783da`, `bef10cd`, `af25318`, `5eb27a7`); first runs on this code.
+Registered in git before their first run (commits `ae3b1a6`, `32dea9a`, `22645f9`, `8760c6c`; their author dates precede the result commit `a837cc1`); first runs on this code.
 
 | id | claim (abridged; full text in `reproduce.py`) | refuted if | result | verdict |
 |---|---|---|---|---|
