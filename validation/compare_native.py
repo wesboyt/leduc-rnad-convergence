@@ -13,7 +13,10 @@ sys.path.insert(0, _ROOT)
 sys.path.insert(0, os.environ.get("NATIVE_LIB_SRC", ""))      # path to the native library's python package
 import numpy as np  # noqa: E402
 
-from donksolver.harness import ToyGame as NativeGame, Pivots as NPivots  # noqa: E402
+import importlib  # noqa: E402
+
+_native = importlib.import_module(os.environ["NATIVE_TOYGAME_MODULE"])   # module exposing ToyGame and Pivots
+NativeGame, NPivots = _native.ToyGame, _native.Pivots
 from lrc.game import ToyGame as PureGame, Pivots as PPivots  # noqa: E402
 
 RES = []
