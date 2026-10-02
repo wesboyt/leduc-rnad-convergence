@@ -221,6 +221,12 @@ that precondition; C22 was registered after seeing it.
 
 ## 6. Mechanism
 
+![Gradient field vs rotational field: SGD converges in both; schedule-free SGD converges in the gradient field and spirals out in the rotational one](docs/sf_fields.svg)
+
+*Figure 1. The 2-D linearised field $F(w) = (\lambda I + \omega J)w$, $\lambda = 1$, step 0.05, real optimizer trajectories.
+Left $\omega = 0$ (minimisation): both converge. Right $\omega = 3\lambda$ (a regularised game): SGD spirals in, schedule-free
+spirals out (it leaves the frame at step 82).*
+
 Near an equilibrium of a regularised zero-sum game the simultaneous-gradient field is, to first order,
 $F(w) = (\lambda I + \omega J)w$: $\lambda$ is the contraction supplied by the regulariser (the magnet strength) and
 $\omega$ the rotation supplied by the game. Minimisation is $\omega = 0$. Plain gradient steps converge iff

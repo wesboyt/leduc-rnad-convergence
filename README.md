@@ -2,6 +2,11 @@
 
 **Read the paper: [WHITEPAPER.md](WHITEPAPER.md)** · Code and every experiment: this repository
 
+![SGD and schedule-free SGD on a gradient field and a rotational field: both converge in the gradient field; in the rotational field SGD spirals in and schedule-free spirals out](docs/sf_fields.svg)
+
+*Stable in gradient fields, unstable in rotational ones: real SGD and schedule-free SGD trajectories, same start and step
+(`experiments/make_sf_figure.py`; the 16-dimensional pre-registered version is claim C22).*
+
 ## Abstract
 
 Regularised learning dynamics are the standard route to Nash equilibria in two-player zero-sum games: regret and policy-gradient updates pulled toward a slowly moving reference policy (R-NaD, magnetic mirror descent, APMD). The same structure (an action's value relative to a baseline over its alternatives, a softmax policy, a KL penalty toward a reference, periodic reference updates) underlies PPO and GRPO and the game-structured variants used to train large language models, such as Nash learning from human feedback and self-play preference optimisation. Convergence theory assumes mirror or gradient steps; practice uses AdamW and, increasingly, schedule-free optimisers. On two-player Leduc hold'em, where exploitability is computed exactly, we find that schedule-free SGD and schedule-free AdamW fail on an identical objective where plain SGD and a mirror step converge (NashConv 3.0-7.2 versus 0.06 and 0.011); that the failure is switched on by schedule-free's interpolation parameter (beta near 0 converges, the default 0.9 does not); that the averaged iterate fails as badly as the acting point; and that the effect persists with sampled values, inside the DeepNash recipe, and, more weakly, with a shared-weight network. In the linearised regularised game both schedule-free variants converge in pure minimisation and diverge once the rotational part exceeds three times the regularisation, at step sizes where SGD is stable. We also show that the timing of reference updates is convergence-critical, and that APMD's noisy-feedback schedule lowers a sampled rule's exploitability floor by 40%. All 23 claims were registered with refutation criteria before being run; four were refuted and are reported.
