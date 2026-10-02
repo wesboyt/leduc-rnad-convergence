@@ -1,0 +1,23 @@
+{
+ "claim": "C20",
+ "statement": "TEMPERATURE ANNEALING instead of a moving magnet (Sokota et al. 2023) in the sampled rule: uniform magnet never refreshed, eta_reg annealed geometrically 0.2 -> 0.02 over 32k steps, SGD (2 seeds): mean of the last 2k steps < 0.25.",
+ "verdict": "REFUTED",
+ "numbers": {
+  "anneal_last2k": [
+   0.252551109497297,
+   0.24921902428198223
+  ],
+  "mean": 0.25088506688963963,
+  "reach_avg": [
+   0.12146502498054657,
+   0.11965758813772978
+  ]
+ },
+ "seconds": 688.4,
+ "papers": [
+  {
+   "paper": "Sokota+ 2023 MMD",
+   "relation": "test: temperature annealing instead of a moving magnet"
+  }
+ ]
+}

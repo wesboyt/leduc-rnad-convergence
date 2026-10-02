@@ -1,0 +1,45 @@
+{
+ "claim": "C22",
+ "statement": "MECHANISM, CORRECTED (registered AFTER C21's result: C21's step 0.005 violated SGD's own stability bound at omega = 30, so its precondition failed). Fresh dimension (16), seed (1) and omega grid {0, 3, 10, 20}; step = half of SGD's bound at the largest omega (0.5 * 2/(1+400)); 40k steps. SGD converges at every omega (< 1e-3); schedule-free SGD and AdamW converge at omega = 0 (< 1e-3) and do NOT at omega = 20 (> 0.1).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sgd": {
+   "0.0": 4.2145218640172857e-44,
+   "3.0": 1.298123053033658e-43,
+   "10.0": 1.1265061802631854e-38,
+   "20.0": 2.0529300679802152e-22
+  },
+  "adam_b1_0": {
+   "0.0": 0.00018889583539812339,
+   "3.0": 0.003376991917366741,
+   "10.0": 0.010672307230790035,
+   "20.0": 0.02088732003538088
+  },
+  "adam_b1_0.9": {
+   "0.0": 8.602701035485648e-05,
+   "3.0": 0.057100692162731816,
+   "10.0": 0.18208353874721606,
+   "20.0": 0.29998684062483544
+  },
+  "sfsgd_b0.9": {
+   "0.0": 6.300012615651895e-05,
+   "3.0": 359.80576300767143,
+   "10.0": 14724096.68628684,
+   "20.0": 10669768685.976835
+  },
+  "sfadamw_b0.9": {
+   "0.0": 0.00010685408520933845,
+   "3.0": 6.360863840913615,
+   "10.0": 12.079754172738262,
+   "20.0": 13.357498555795909
+  },
+  "gamma": 0.0024937655860349127
+ },
+ "seconds": 84.2,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "BOUNDARY test (corrected C21): minimisation vs rotation-dominated games"
+  }
+ ]
+}

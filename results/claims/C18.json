@@ -1,0 +1,24 @@
+{
+ "claim": "C18",
+ "statement": "APMD's NOISY-FEEDBACK PRESCRIPTION in the sampled rule (Abe et al. 2024): learning rate restarted at every slingshot (magnet) update and decayed as lr / (1 + s / 500), slingshot interval T^(4/5) ~ 4000 for T = 32k. Mean of the last 2k steps (2 seeds) is < 0.8x the same interval with a constant learning rate, and < 0.25.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "apmd_last2k": [
+   0.23328176238326326,
+   0.21578532735701725
+  ],
+  "constant_lr_last2k": [
+   0.36098807728051835,
+   0.39260808609012926
+  ],
+  "apmd_mean": 0.22453354487014027,
+  "constant_mean": 0.3767980816853238
+ },
+ "seconds": 928.2,
+ "papers": [
+  {
+   "paper": "Abe+ 2024 APMD",
+   "relation": "test: the noisy-feedback learning-rate and slingshot-interval prescription"
+  }
+ ]
+}

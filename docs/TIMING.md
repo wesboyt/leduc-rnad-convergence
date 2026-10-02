@@ -126,6 +126,10 @@ and an interval chosen without reference to the noise, and its noise is heteroge
 here. A function approximator shares statistical strength across information sets and changes this trade-off; that is
 untested in this repository.
 
+*Update (C18):* APMD's prescription transplanted into the sampled rule (learning rate restarted at each magnet update
+and decayed as $\propto 1/(1 + s/500)$; interval 4000 ≈ $T^{4/5}$ for $T$ = 32k) lowers the floor to 0.225 from 0.377 with
+the same interval and a constant step. This is constructive evidence for T1/T3.
+
 ### T4 — Fixed regularisation toward uniform sets a bias floor
 
 *Definition.* The fixed pulls $\eta_{\text{unif}}$ and $\alpha_{\text{ent}}$ add a temperature $\tau$ toward the uniform

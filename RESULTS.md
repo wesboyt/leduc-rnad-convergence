@@ -17,6 +17,17 @@ Claims, criteria and original evidence: `docs/CLAIMS.md`.
 | C10 | **SUPPORTED** | 448.4 | exactQ_last4_mean = 0.3509; sampledQ_last4_mean = 0.3767 |
 | C11 | **SUPPORTED** | 14.7 | grad_norm_uniform = 0.08203; grad_norm_at_qre = 0.002099; frac_entries_absz_gt4 = 0.04464 |
 | C12 | **SUPPORTED** | 279.5 | alpha_chips = [0.09501, 0.3287]; nashconv_qre = 0.1357; reference_steps_to_1pct = 1000; sampled_nashconv_16k = 0.2288; sampled_rms_logerr_by_round = [0.3439, 0.9021] |
+| C13 | **SUPPORTED** | 43.8 | sgd_lr0.1 = 0.06164; sfsgd_lr0.1 = 3.034; sfsgd_lr0.03 = 7.188 |
+| C14 | **SUPPORTED** | 81.0 | sfsgd_b0.0 = 0.09714; sfadamw_b0.0 = 0.07321; sfsgd_b0.5 = 3.11; sfadamw_b0.5 = 0.1011; sfsgd_b0.9 = 3.034; sfadamw_b0.9 = 4.801 |
+| C15 | **SUPPORTED** | 387.7 | adam_b1_0 = 0.9056; adam_b1_0_per_seed = [0.7703, 1.036, 0.9101]; adam_b1_0.9 = 1.476; adam_b1_0.9_per_seed = [1.245, 1.694, 1.488]; sfadamw_b0.9 = 1.921; sfadamw_b0.9_per_seed = [3.11, 1.245, 1.408]; sfadamw_b0 = 1.131; sfadamw_b0_per_seed = [0.8198, 1.628, 0.9461] |
+| C16 | **SUPPORTED** | 359.6 | sfsgd_final = [3.981, 2.805]; sfsgd_reach_avg = [2.668, 2.296] |
+| C17 | **REFUTED** | 119.1 | adam_b0.9 = 0.384; adam_b0.9_optimistic = 0.3197; sfadamw = 4.801; sfadamw_optimistic = 4.801; sgd_lr0.3 = 0.2714; sgd_lr0.3_extragradient = 0.3384; a_optimism_helps_adam = False; b_optimism_does_not_rescue_sf = True; c_extragradient_stabilises = False |
+| C18 | **SUPPORTED** | 928.2 | apmd_last2k = [0.2333, 0.2158]; constant_lr_last2k = [0.361, 0.3926]; apmd_mean = 0.2245; constant_mean = 0.3768 |
+| C19 | **SUPPORTED** | 950.4 | deepnash_adam_b0 = [0.3883, 0.4343]; deepnash_sfadamw = [2.27, 2.34]; adam_mean = 0.4113; sfadamw_mean = 2.305 |
+| C20 | **REFUTED** | 688.4 | anneal_last2k = [0.2526, 0.2492]; mean = 0.2509; reach_avg = [0.1215, 0.1197] |
+| C21 | **REFUTED** | 94.9 | sgd = {'0.0': 2.8947756746419496e-44, '1.0': 3.7263280374080153e-44, '10.0': 2.5974491240654433e-33, '30.0': 1.1416967075408426e+54}; adam_b1_0 = {'0.0': 0.0, '1.0': 0.0015415507467453078, '10.0': 0.021201002574989476, '30.0': 0.06041083863410307}; adam_b1_0.9 = {'0.0': 2.8888729413011543e-05, '1.0': 0.028787982159305996, '10.0': 0.3620621902610743, '30.0': 0.7341645779018462}; sfsgd_b0.9 = {'0.0': 5.942572259074121e-05, '1.0': 0.11220316202934119, '10.0': 16665526.512289142, '30.0': 2373687631406.275}; sfadamw_b0.9 = {'0.0': 0.00014875578149857943, '1.0': 0.00043605049571536963, '10.0': 13.147967712139412, '30.0': 14.23151929384038} |
+| C22 | **SUPPORTED** | 84.2 | sgd = {'0.0': 4.2145218640172857e-44, '3.0': 1.298123053033658e-43, '10.0': 1.1265061802631854e-38, '20.0': 2.0529300679802152e-22}; adam_b1_0 = {'0.0': 0.00018889583539812339, '3.0': 0.003376991917366741, '10.0': 0.010672307230790035, '20.0': 0.02088732003538088}; adam_b1_0.9 = {'0.0': 8.602701035485648e-05, '3.0': 0.057100692162731816, '10.0': 0.18208353874721606, '20.0': 0.29998684062483544}; sfsgd_b0.9 = {'0.0': 6.300012615651895e-05, '3.0': 359.80576300767143, '10.0': 14724096.68628684, '20.0': 10669768685.976835}; sfadamw_b0.9 = {'0.0': 0.00010685408520933845, '3.0': 6.360863840913615, '10.0': 12.079754172738262, '20.0': 13.357498555795909}; gamma = 0.002494 |
+| C23 | **REFUTED** | 146.7 | sfsgd_y_last5 = 3.034; sfsgd_x_last5 = 3.034; sfadamw_y_last5 = 4.801; sfadamw_x_last5 = 4.801 |
 
 ## Statements and the papers they bear on
 
@@ -52,3 +63,30 @@ CONFIRMED = the paper's prediction reproduces. BOUNDARY = the guarantee does not
 * **C12** TIMING: with a FIXED magnet and EXACT Q, the sampled rule has not solved its regularised game after 16k steps (round-2 RMS log-prob error > 0.5, NashConv > 1.2x the exact QRE), while the exact reference solves the same game to 1% in < 2000 steps.
   * Perolat+ 2021 — BOUNDARY: a short refresh clock vs a slow sampled inner solve
   * Abe+ 2024 APMD — BOUNDARY: heterogeneous per-information-set noise, one constant step
+* **C13** SCHEDULE-FREE MECHANISM (exact, table): schedule-free SGD (interpolation beta 0.9) fails (> 1.0) on the same objective and learning rates at which plain SGD converges (< 0.2): the failure is schedule-free's averaging / interpolation, not Adam's normalisation.
+  * Defazio+ 2024 schedule-free — BOUNDARY: averaging/interpolation breaks last-iterate game dynamics
+  * Sokota+ 2023 MMD — BOUNDARY: the objective needs a mirror-like step
+* **C14** DOSE-RESPONSE (exact, table): for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01), NashConv at interpolation beta = 0.9 is > 5x that at beta = 0 (where schedule-free acts at its base iterate), and beta = 0 itself converges (< 0.3). [beta = 0 is run as 1e-6 for both: the library's SGD variant rejects exactly 0; the first run crashed on that before producing any number.]
+  * Defazio+ 2024 schedule-free — BOUNDARY: dose-response in the interpolation parameter
+* **C15** SHARED-WEIGHT NETWORK (exact values, the regime of LLM policy training: normalisation per WEIGHT): mean NashConv over the last 10k of 30k steps, 3 seeds. Schedule-free AdamW (beta 0.9) is > 2x worse than Adam with beta1 = 0, and Adam with beta1 = 0.9 is worse than beta1 = 0.
+  * Perolat+ 2022 DeepNash — test: momentum-free Adam (DeepNash's b1 = 0) vs schedule-free with a network
+  * Feng, Ou & Wang 2026 (Adam ODE in zero-sum games) — test: momentum role in games, network policy
+* **C16** SCHEDULE-FREE IN THE SAMPLED RULE: schedule-free SGD with SGD's learning rate (10) and everything else as the converging SGD arm of C9 ends > 1.0 on both seeds (16k steps); SGD ends < 0.6 (C9).
+  * Defazio+ 2024 schedule-free — BOUNDARY: schedule-free SGD under sampled feedback
+* **C17** OPTIMISM / EXTRAGRADIENT (exact, table; Daskalakis & Panageas, Lee et al., Cen et al., Gidel et al.): (a) optimism improves Adam beta1 0.9 (softmax PG, lr 0.003) by > 2x; (b) optimism does NOT rescue schedule-free AdamW (lr 0.01 stays > 1.0); (c) extragradient stabilises softmax-PG SGD at lr 0.3 (< 0.1).
+  * Daskalakis & Panageas 2018; Lee+ 2021; Cen+ 2023 — test: optimism
+  * Gidel+ 2019 VI — test: extragradient
+  * Daskalakis+ 2018 Optimistic Adam — test: optimism vs schedule-free
+* **C18** APMD's NOISY-FEEDBACK PRESCRIPTION in the sampled rule (Abe et al. 2024): learning rate restarted at every slingshot (magnet) update and decayed as lr / (1 + s / 500), slingshot interval T^(4/5) ~ 4000 for T = 32k. Mean of the last 2k steps (2 seeds) is < 0.8x the same interval with a constant learning rate, and < 0.25.
+  * Abe+ 2024 APMD — test: the noisy-feedback learning-rate and slingshot-interval prescription
+* **C19** THE DEEPNASH RECIPE in the sampled rule: Adam beta1 = 0, magnet interpolation alpha_n = min(1, 2n/K), NeuRD threshold 2, long inner phase K = 4000 (32k steps, 2 seeds): mean of the last 2k steps < 0.5; the same recipe with schedule-free AdamW (beta 0.9) is > 2x worse.
+  * Perolat+ 2022 DeepNash — test: the full recipe (b1 = 0, interpolation, threshold, long phases)
+* **C20** TEMPERATURE ANNEALING instead of a moving magnet (Sokota et al. 2023) in the sampled rule: uniform magnet never refreshed, eta_reg annealed geometrically 0.2 -> 0.02 over 32k steps, SGD (2 seeds): mean of the last 2k steps < 0.25.
+  * Sokota+ 2023 MMD — test: temperature annealing instead of a moving magnet
+* **C21** MECHANISM (linearised regularised game F(w) = (lambda I + omega J) w, lambda = 1, step 0.005 at which SGD converges for every omega tested): schedule-free SGD and schedule-free AdamW converge in MINIMISATION (omega = 0: |w_T|/|w_0| < 1e-3 after 20k steps) but NOT in rotation-dominated games (omega = 30: > 0.1), while SGD converges at every omega (< 1e-3).
+  * Defazio+ 2024 schedule-free — BOUNDARY test: minimisation (designed regime) vs rotation-dominated games
+  * Gidel+ 2019 VI; Daskalakis & Panageas 2018 — rotational vector fields and optimizer stability
+* **C22** MECHANISM, CORRECTED (registered AFTER C21's result: C21's step 0.005 violated SGD's own stability bound at omega = 30, so its precondition failed). Fresh dimension (16), seed (1) and omega grid {0, 3, 10, 20}; step = half of SGD's bound at the largest omega (0.5 * 2/(1+400)); 40k steps. SGD converges at every omega (< 1e-3); schedule-free SGD and AdamW converge at omega = 0 (< 1e-3) and do NOT at omega = 20 (> 0.1).
+  * Defazio+ 2024 schedule-free — BOUNDARY test (corrected C21): minimisation vs rotation-dominated games
+* **C23** WHICH ITERATE FAILS (exact, table; registered before its first run): schedule-free's guarantee concerns its AVERAGED iterate x (eval mode); the runs above score the ACTING point y (what generates self-play data). Hypothesis: the averaged iterate converges -- NashConv(x) < 0.2 for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01) at 30k steps -- so the failure is specific to acting with y.
+  * Defazio+ 2024 schedule-free — test: the averaged iterate x vs the acting point y in a game

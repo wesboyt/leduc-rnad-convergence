@@ -1,0 +1,18 @@
+{
+ "claim": "C23",
+ "statement": "WHICH ITERATE FAILS (exact, table; registered before its first run): schedule-free's guarantee concerns its AVERAGED iterate x (eval mode); the runs above score the ACTING point y (what generates self-play data). Hypothesis: the averaged iterate converges -- NashConv(x) < 0.2 for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01) at 30k steps -- so the failure is specific to acting with y.",
+ "verdict": "REFUTED",
+ "numbers": {
+  "sfsgd_y_last5": 3.0342091258901354,
+  "sfsgd_x_last5": 3.034384825127127,
+  "sfadamw_y_last5": 4.800823431229126,
+  "sfadamw_x_last5": 4.800710292171007
+ },
+ "seconds": 146.7,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "test: the averaged iterate x vs the acting point y in a game"
+  }
+ ]
+}

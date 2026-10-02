@@ -25,6 +25,24 @@ criterion, prints **SUPPORTED** or **REFUTED** with the numbers it used, and wri
 | C11 | The sampled rule's expected step (clips off) vanishes at the exact regularised equilibrium | ‖ḡ(π*)‖ ≥ 5% of ‖ḡ(uniform)‖ or > 10% of entries with \|z\| > 4 | 2.2e-3 vs 7.7e-2 (clips on at uniform); 3.7% | see `RESULTS.md` |
 | C12 | TIMING: fixed magnet, exact Q, SGD lr 10: after 16k steps the sampled rule has not solved its regularised game (round-2 RMS log-prob error > 0.5, NashConv > 1.2× the QRE) while the exact reference solves it to 1% in < 2000 steps | any of the three fails | round-2 error 0.91, NashConv 0.23 vs 0.140 | see `RESULTS.md` |
 
+## Claims C13–C23: the previously untested hypotheses and the schedule-free mechanism
+
+Registered in git before their first run (commits `d2783da`, `bef10cd`, `af25318`, `5eb27a7`); first runs on this code.
+
+| id | claim (abridged; full text in `reproduce.py`) | refuted if | result | verdict |
+|---|---|---|---|---|
+| C13 | schedule-free SGD (β 0.9) fails where plain SGD converges, same objective (exact, table) | SGD ≥ 0.2 or schedule-free SGD ≤ 1.0 at lr 0.1 or 0.03 | SGD 0.062; schedule-free SGD 3.03 / 7.19 | SUPPORTED |
+| C14 | dose-response in schedule-free's interpolation β: β = 0.9 > 5× β → 0, and β → 0 converges | either fails for either optimizer | sf-SGD 0.097 → 3.03; sf-AdamW 0.073 → 4.80 (β 0.5: 3.11 / 0.10) | SUPPORTED |
+| C15 | shared-weight network (exact values): sf-AdamW > 2× Adam β1 0; Adam β1 0.9 > β1 0 | either fails | 1.92 vs 0.91 (per seed 3.11/1.25/1.41 vs 0.77/1.04/0.91); β1 0.9: 1.48 | SUPPORTED (narrowly: 1.92 vs bound 1.81) |
+| C16 | sampled rule: schedule-free SGD > 1.0 on both seeds (SGD: 0.33–0.37, C9) | any seed ≤ 1.0 | 3.98 / 2.81 | SUPPORTED |
+| C17 | (a) optimism improves Adam β1 0.9 > 2×; (b) optimism does not rescue sf-AdamW; (c) extragradient stabilises SGD lr 0.3 (< 0.1) | any of (a)–(c) fails | (a) 0.384 → 0.320 ✗; (b) 4.80 → 4.80 ✓; (c) 0.271 → 0.338 ✗ | **REFUTED** |
+| C18 | APMD's noisy-feedback prescription (lr restart-decay, interval T^(4/5)) < 0.8× constant lr and < 0.25 (sampled) | either fails | 0.225 vs 0.377 | SUPPORTED |
+| C19 | DeepNash recipe (Adam β1 0, interpolation, threshold 2, long phases) < 0.5; with sf-AdamW > 2× worse (sampled) | either fails | 0.41 vs 2.30 | SUPPORTED |
+| C20 | temperature annealing 0.2 → 0.02 with a fixed magnet < 0.25 (sampled, SGD) | mean ≥ 0.25 | 0.2509 (reach-average 0.12) | **REFUTED** (narrow miss) |
+| C21 | linear mechanism at step 0.005 | SGD fails at some ω, or sf converges at ω = 30 / fails at ω = 0 | SGD diverged at ω = 30 (step above its own bound) | **REFUTED** (design error) |
+| C22 | linear mechanism, corrected: SGD converges at every ω; sf-SGD and sf-AdamW converge at ω = 0 and not at ω = 20 | any part fails | SGD ≤ 2e-22 everywhere; sf-SGD 6e-5 (ω 0) → 360 (ω 3) → 1e10 (ω 20); sf-AdamW 1e-4 → 6.4 → 13.4 | SUPPORTED |
+| C23 | the schedule-free averaged iterate x converges (< 0.2) although the acting point y does not | x ≥ 0.2 for either optimizer | x 3.034 / 4.8007 = y 3.034 / 4.8008 | **REFUTED** |
+
 ## Claims and the papers they bear on
 
 CONFIRMED = the paper's prediction reproduces. BOUNDARY = the paper's guarantee does not carry over once a named
@@ -43,6 +61,11 @@ theorem within its hypotheses. Paper-by-paper detail and the untested prescripti
 | C9 | Perolat et al. 2022 | BOUNDARY: R-NaD realised with schedule-free AdamW |
 | C10 | Abe et al. 2024 (APMD) | BOUNDARY: periodic magnet + constant step does not absorb per-row sampling noise |
 | C12 | Perolat et al. 2021; Abe et al. 2024 | BOUNDARY: refresh clock shorter than the sampled inner solve; heterogeneous noise |
+| C13, C14, C16, C22, C23 | Defazio et al. 2024 (schedule-free) | BOUNDARY: designed for minimisation; fails in rotation-dominated game dynamics, through its interpolation β |
+| C15, C19 | Perolat et al. 2022 (DeepNash used Adam with b1 = 0); Feng, Ou & Wang 2026 | CONFIRMED: momentum-free Adam is the better choice; schedule-free is worse inside the DeepNash recipe |
+| C17 | Daskalakis & Panageas 2018; Lee et al. 2021; Cen et al. 2023; Gidel et al. 2019 | not confirmed here in the tested form (gradient-level optimism, plain extragradient, constant steps); optimism does not rescue schedule-free |
+| C18 | Abe et al. 2024 (APMD) | CONFIRMED: its noisy-feedback prescription lowers the sampled rule's floor (0.38 → 0.22) |
+| C20 | Sokota et al. 2023 | inconclusive: annealing reaches 0.251 (criterion 0.25); reach-average 0.12 |
 
 ## How the claims fit together
 
@@ -70,6 +93,14 @@ C12 ─┘   approximation (T1, T3)
 * **C3** and **C7** were restated before their first run in this repository. For C3, the no-floor contrast at α = 0.2
   is weak because that run happens to end low, so α = 0.5 is used. For C7, β1 = 0 and β1 = 0.5 are close
   (0.044 vs 0.055), so a strict three-way ordering is not claimed.
+* **C14.** β = 0 is run as β = 1e-6 for both schedule-free optimizers: the library's SGD variant rejects exactly 0.
+  The first run crashed on that before producing any number.
+* **C21** is kept as REFUTED. Its step (0.005) violated plain SGD's own stability bound at ω = 30
+  (2/(1 + 900) ≈ 0.0022), so the precondition "SGD converges at every ω" failed. **C22** was registered *after*
+  seeing C21's numbers, with a fresh dimension, seed and ω grid and the step set to half of SGD's bound at the
+  largest ω. Read C22 with that in mind.
+* **C17** and **C23** were refuted on the merits and are reported as such.
+* **C20** missed its criterion by 0.0009 (0.2509 vs 0.25). It is reported as refuted, not rounded.
 
 ## Rejected hypotheses (negative results you can also challenge)
 

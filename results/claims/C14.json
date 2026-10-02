@@ -1,0 +1,20 @@
+{
+ "claim": "C14",
+ "statement": "DOSE-RESPONSE (exact, table): for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01), NashConv at interpolation beta = 0.9 is > 5x that at beta = 0 (where schedule-free acts at its base iterate), and beta = 0 itself converges (< 0.3). [beta = 0 is run as 1e-6 for both: the library's SGD variant rejects exactly 0; the first run crashed on that before producing any number.]",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sfsgd_b0.0": 0.09714001146810539,
+  "sfadamw_b0.0": 0.07321074673391302,
+  "sfsgd_b0.5": 3.110205342891534,
+  "sfadamw_b0.5": 0.10111227726827318,
+  "sfsgd_b0.9": 3.034209125890136,
+  "sfadamw_b0.9": 4.8008215172106485
+ },
+ "seconds": 81.0,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "BOUNDARY: dose-response in the interpolation parameter"
+  }
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "claim": "C15",
+ "statement": "SHARED-WEIGHT NETWORK (exact values, the regime of LLM policy training: normalisation per WEIGHT): mean NashConv over the last 10k of 30k steps, 3 seeds. Schedule-free AdamW (beta 0.9) is > 2x worse than Adam with beta1 = 0, and Adam with beta1 = 0.9 is worse than beta1 = 0.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "adam_b1_0": 0.9055628797778622,
+  "adam_b1_0_per_seed": [
+   0.7703079451198148,
+   1.0362948143891224,
+   0.9100858798246495
+  ],
+  "adam_b1_0.9": 1.4756748357808853,
+  "adam_b1_0.9_per_seed": [
+   1.2452146854713326,
+   1.6938132325805022,
+   1.487996589290821
+  ],
+  "sfadamw_b0.9": 1.9213495684915578,
+  "sfadamw_b0.9_per_seed": [
+   3.110154693827373,
+   1.2454192008303058,
+   1.4084748108169944
+  ],
+  "sfadamw_b0": 1.131404179312254,
+  "sfadamw_b0_per_seed": [
+   0.819759093222222,
+   1.6283315637391613,
+   0.9461218809753792
+  ]
+ },
+ "seconds": 387.7,
+ "papers": [
+  {
+   "paper": "Perolat+ 2022 DeepNash",
+   "relation": "test: momentum-free Adam (DeepNash's b1 = 0) vs schedule-free with a network"
+  },
+  {
+   "paper": "Feng, Ou & Wang 2026 (Adam ODE in zero-sum games)",
+   "relation": "test: momentum role in games, network policy"
+  }
+ ]
+}

@@ -4,3 +4,4 @@ results/*
 !results/claims/
 results_reproduce_all.txt
 .pytest_cache/
+results_reproduce_*.txt

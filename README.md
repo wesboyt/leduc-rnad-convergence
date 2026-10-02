@@ -5,6 +5,8 @@ This repository studies one sampled, regularised policy-gradient rule of the R-N
 against an exact ruler (NashConv over all 120 deals of 2-player Leduc hold'em) and an exact reference solver that
 provably converges.
 
+**Paper: [Schedule-Free Shortcomings in Relation to Relative-Regret RL Algorithms](docs/WHITEPAPER.md).**
+
 Everything is self-contained: the game, the exact evaluator, the reference solver, the sampled rule, the audits, the
 experiment grids and a claim-by-claim reproduction script with pre-stated refutation criteria. Dependencies: numpy,
 torch (CPU) and schedulefree.
@@ -36,7 +38,7 @@ python experiments/audit_harness.py      # 15 checks of the sampled harness, eac
 python tests/test_core.py                # rules-level tests (or: python -m pytest tests)
 python reproduce.py --list               # the claims
 python reproduce.py C2 C3 C4             # run some (SUPPORTED / REFUTED + numbers, results/claims/*.json)
-python reproduce.py all --jobs 4         # everything, ~1-2 h on 4 cores
+python reproduce.py all --jobs 8         # everything, ~3 h on 8 cores
 ```
 
 On a free-threaded CPython build set `PYTHON_GIL=0`. Single runs:
@@ -55,8 +57,10 @@ python experiments/ladder.py --grid p4 --steps 16000 --seeds 1,2 --jobs 4 && pyt
 | `lrc/reference.py` | full-width exact values (counterfactual values, soft/regularised values), behavioural MMD with fixed / refreshed / gated / geometric magnets, support floor, refresh noise; exact-gradient learners (softmax PG, NeuRD) with SGD / Adam / schedule-free AdamW |
 | `lrc/harness.py` | the sampled rule (`docs/ALGORITHM.md` §5), every component switchable |
 | `lrc/weights.py` | importance weights, advantage centring, the uniform PPO surrogate |
-| `experiments/` | `ladder.py` (sampled-rule grids), `mmd_grid.py` (reference grids), `fixedpoint_probe.py`, `refresh_error.py`, `audit_harness.py`, `mmd_summary.py` |
-| `reproduce.py` | claims C1–C12 with pre-stated refutation criteria |
+| `lrc/policy.py` | table and shared-weight MLP policies; SGD / Adam / schedule-free AdamW / schedule-free SGD; gradient-level optimism |
+| `experiments/` | `ladder.py` (sampled-rule grids), `mmd_grid.py` (reference grids), `sf_linear.py` (optimisers on the linearised regularised game), `fixedpoint_probe.py`, `refresh_error.py`, `audit_harness.py`, `mmd_summary.py` |
+| `reproduce.py` | claims C1–C23 with pre-stated refutation criteria |
+| `docs/WHITEPAPER.md` | the paper: schedule-free shortcomings in relative-regret RL algorithms, the mechanism, and the connection to PPO / GRPO / Nash-MD / SPPO |
 | `docs/ALGORITHM.md` | the game, the regularised game, the reference, the gradient learners and the sampled rule in notation |
 | `docs/TIMING.md` | the timing issues T1–T5 and their relation to the literature |
 | `docs/CLAIMS.md` | claims, original evidence, criteria, revision log, rejected hypotheses |
@@ -81,6 +85,19 @@ python experiments/ladder.py --grid p4 --steps 16000 --seeds 1,2 --jobs 4 && pyt
 | C10 | the sampled floor is not noise in Q |
 | C11 | the sampled rule's expected step has the right fixed point (clips off) |
 | C12 | the sampled inner loop has not solved its game after 16k steps; the exact reference takes < 2000 |
+| C13 | schedule-free SGD fails where SGD converges (the failure is not Adam's) |
+| C14 | dose-response: schedule-free's interpolation β switches the failure on |
+| C15 | with a shared-weight network: same ordering, smaller effect (narrow) |
+| C16 | schedule-free SGD fails in the sampled rule |
+| C17 | **refuted**: optimism / extragradient (forms tested) do not help much; optimism does not rescue schedule-free |
+| C18 | APMD's noisy-feedback prescription lowers the sampled floor 0.38 → 0.22 |
+| C19 | the DeepNash recipe works with Adam β1 = 0 (0.41) and not with schedule-free (2.30) |
+| C20 | **refuted (narrowly)**: temperature annealing 0.251 vs 0.25 |
+| C21 | **refuted (design error)**: linear mechanism test with a step above SGD's bound |
+| C22 | linear mechanism: schedule-free converges in minimisation, diverges with rotation ω ≥ 3λ |
+| C23 | **refuted**: schedule-free's averaged iterate fails as badly as its acting point |
+
+19 of 23 supported; the four refutations are kept and explained in `docs/CLAIMS.md`.
 
 ## How to challenge the findings
 
@@ -111,6 +128,14 @@ python experiments/ladder.py --grid p4 --steps 16000 --seeds 1,2 --jobs 4 && pyt
   https://arxiv.org/abs/2210.01050
 * G. Gidel et al., *A Variational Inequality Perspective on Generative Adversarial Networks*, ICLR 2019.
   https://arxiv.org/abs/1802.10551
+* Y. Feng, W. Ou, X. Wang, *Understanding Dynamics of Adam in Zero-Sum Games: An ODE Approach*, 2026.
+  https://arxiv.org/abs/2605.19392
+* R. Munos et al., *Nash Learning from Human Feedback*, ICML 2024. https://arxiv.org/abs/2312.00886
+* Y. Wu et al., *Self-Play Preference Optimization for Language Model Alignment*, 2024. https://arxiv.org/abs/2405.00675
+* Z. Shao et al., *DeepSeekMath* (GRPO), 2024. https://arxiv.org/abs/2402.03300
+* J. Schulman et al., *Proximal Policy Optimization Algorithms*, 2017. https://arxiv.org/abs/1707.06347
+* D. Hennes et al., *Neural Replicator Dynamics*, AAMAS 2020. https://arxiv.org/abs/1906.00190
+* C. Daskalakis, A. Ilyas, V. Syrgkanis, H. Zeng, *Training GANs with Optimism*, ICLR 2018. https://arxiv.org/abs/1711.00141
 * Added here: G. Gidel et al., *Negative Momentum for Improved Game Dynamics*, AISTATS 2019
   (https://arxiv.org/abs/1807.04740); R. T. Rockafellar, *Monotone Operators and the Proximal Point Algorithm*, SIAM J.
   Control Optim. 1976; A. Defazio et al., *The Road Less Scheduled* (schedule-free optimizers), 2024

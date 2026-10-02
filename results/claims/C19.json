@@ -1,0 +1,24 @@
+{
+ "claim": "C19",
+ "statement": "THE DEEPNASH RECIPE in the sampled rule: Adam beta1 = 0, magnet interpolation alpha_n = min(1, 2n/K), NeuRD threshold 2, long inner phase K = 4000 (32k steps, 2 seeds): mean of the last 2k steps < 0.5; the same recipe with schedule-free AdamW (beta 0.9) is > 2x worse.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "deepnash_adam_b0": [
+   0.3882579871178716,
+   0.43426950846452333
+  ],
+  "deepnash_sfadamw": [
+   2.269849973676633,
+   2.3395650921120694
+  ],
+  "adam_mean": 0.41126374779119745,
+  "sfadamw_mean": 2.3047075328943514
+ },
+ "seconds": 950.4,
+ "papers": [
+  {
+   "paper": "Perolat+ 2022 DeepNash",
+   "relation": "test: the full recipe (b1 = 0, interpolation, threshold, long phases)"
+  }
+ ]
+}

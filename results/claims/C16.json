@@ -1,0 +1,22 @@
+{
+ "claim": "C16",
+ "statement": "SCHEDULE-FREE IN THE SAMPLED RULE: schedule-free SGD with SGD's learning rate (10) and everything else as the converging SGD arm of C9 ends > 1.0 on both seeds (16k steps); SGD ends < 0.6 (C9).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sfsgd_final": [
+   3.9806239884037797,
+   2.8053630306312765
+  ],
+  "sfsgd_reach_avg": [
+   2.668412332143875,
+   2.2961060951916297
+  ]
+ },
+ "seconds": 359.6,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "BOUNDARY: schedule-free SGD under sampled feedback"
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "claim": "C17",
+ "statement": "OPTIMISM / EXTRAGRADIENT (exact, table; Daskalakis & Panageas, Lee et al., Cen et al., Gidel et al.): (a) optimism improves Adam beta1 0.9 (softmax PG, lr 0.003) by > 2x; (b) optimism does NOT rescue schedule-free AdamW (lr 0.01 stays > 1.0); (c) extragradient stabilises softmax-PG SGD at lr 0.3 (< 0.1).",
+ "verdict": "REFUTED",
+ "numbers": {
+  "adam_b0.9": 0.383959722900214,
+  "adam_b0.9_optimistic": 0.3196861490173404,
+  "sfadamw": 4.8008215172106485,
+  "sfadamw_optimistic": 4.800733023409818,
+  "sgd_lr0.3": 0.2713564691664177,
+  "sgd_lr0.3_extragradient": 0.33837078622869426,
+  "a_optimism_helps_adam": false,
+  "b_optimism_does_not_rescue_sf": true,
+  "c_extragradient_stabilises": false
+ },
+ "seconds": 119.1,
+ "papers": [
+  {
+   "paper": "Daskalakis & Panageas 2018; Lee+ 2021; Cen+ 2023",
+   "relation": "test: optimism"
+  },
+  {
+   "paper": "Gidel+ 2019 VI",
+   "relation": "test: extragradient"
+  },
+  {
+   "paper": "Daskalakis+ 2018 Optimistic Adam",
+   "relation": "test: optimism vs schedule-free"
+  }
+ ]
+}
