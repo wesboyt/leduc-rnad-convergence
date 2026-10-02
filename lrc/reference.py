@@ -220,7 +220,7 @@ def per_entry(game, x):
 def grad_run(game, steps=30000, opt="sgd", pg="softmax", lr=0.1, alpha=0.2, tau_u=0.0, K=500, zfloor=0.0,
              magnet="refresh", score_every=1000, log=None, betas=(0.9, 0.999), eps=1e-8, row_weight="uniform",
              own_reach_weight=False, policy="table", hidden=64, seed=0, optimistic=False, extragradient=False,
-             warmup=100, logit_threshold=0.0):
+             warmup=100, logit_threshold=0.0, eval_average=False):
     """The SAME exact full-width objective as mmd(soft=False), moved by a gradient optimizer.
     Advantage (node-only anchor):  A = q - alpha*(log pi - log rho) - tau_u*(log pi - log u)
     pg='softmax': loss gradient on logits = -pi*(A - E_pi A)   (PPO / softmax policy gradient at ratio 1)
@@ -230,7 +230,9 @@ def grad_run(game, steps=30000, opt="sgd", pg="softmax", lr=0.1, alpha=0.2, tau_
     opt: sgd | adam | sfadamw | sfsgd (betas[0] = momentum / schedule-free interpolation).
     optimistic: feed 2 g_t - g_{t-1}. extragradient (sgd only): gradient at the look-ahead point theta - lr g.
     logit_threshold beta > 0: DeepNash's NeuRD threshold -- the logit gradient is zeroed where the row-centred logit is
-    already beyond +-beta and the update would push it further."""
+    already beyond +-beta and the update would push it further.
+    eval_average (schedule-free optimizers): also score the AVERAGED iterate x (the optimizer's eval mode), the
+    point schedule-free's guarantee is about; 'nashconv' is always the acting point y (train mode)."""
     import torch
     from lrc.policy import MLPPolicy, Optimism, make_optimizer
     g = game.g
@@ -316,6 +318,15 @@ def grad_run(game, steps=30000, opt="sgd", pg="softmax", lr=0.1, alpha=0.2, tau_
         if t % score_every == 0 or t == steps:
             nc = g.exploitability(p)["nashconv"]
             rec = {"t": t, "nashconv": nc, "min_p": float(p.min()), "sec": time.time() - t0}
+            if eval_average and opt in ("sfadamw", "sfsgd"):
+                o.eval()
+                with torch.no_grad():
+                    zx = logits_fn().detach().numpy().copy()
+                o.train()
+                zx = game.normalise_log(zx)
+                if zfloor > 0:
+                    zx = game.normalise_log(np.maximum(zx, -zfloor))
+                rec["nashconv_x"] = g.exploitability(np.exp(zx))["nashconv"]
             curve.append(rec)
             if log:
                 log(json.dumps(rec))

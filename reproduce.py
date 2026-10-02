@@ -403,6 +403,22 @@ def c22(jobs):
     return res, ok
 
 
+def c23(jobs):
+    """WHICH ITERATE FAILS (exact, table; registered before its first run): schedule-free's guarantee concerns its
+    AVERAGED iterate x (eval mode); the runs above score the ACTING point y (what generates self-play data).
+    Hypothesis: the averaged iterate converges -- NashConv(x) < 0.2 for schedule-free SGD (lr 0.1) and schedule-free
+    AdamW (lr 0.01) at 30k steps -- so the failure is specific to acting with y."""
+    arms = {"sfsgd": dict(_EX, opt="sfsgd", pg="softmax", lr=0.1, betas=(0.9, 0.999), eval_average=True),
+            "sfadamw": dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(0.9, 0.999), eval_average=True)}
+    names = list(arms)
+    res = pmap(run_grad, [arms[n] for n in names], jobs)
+    num = {}
+    for n, c in zip(names, res):
+        num[n + "_y_last5"] = _last(c, 5)
+        num[n + "_x_last5"] = sum(r["nashconv_x"] for r in c[-5:]) / 5
+    return num, num["sfsgd_x_last5"] < 0.2 and num["sfadamw_x_last5"] < 0.2
+
+
 # claim -> [(paper, relation)]; relation: CONFIRMED (the paper's prediction reproduces) | BOUNDARY (the guarantee does
 # not carry over once a named hypothesis is dropped: refutes an EXTRAPOLATION, not the paper). docs/PAPERS.md.
 PAPERS = {
@@ -439,6 +455,7 @@ PAPERS = {
     "C20": [("Sokota+ 2023 MMD", "test: temperature annealing instead of a moving magnet")],
     "C21": [("Defazio+ 2024 schedule-free", "BOUNDARY test: minimisation (designed regime) vs rotation-dominated games"),
             ("Gidel+ 2019 VI; Daskalakis & Panageas 2018", "rotational vector fields and optimizer stability")],
+    "C23": [("Defazio+ 2024 schedule-free", "test: the averaged iterate x vs the acting point y in a game")],
     "C22": [("Defazio+ 2024 schedule-free", "BOUNDARY test (corrected C21): minimisation vs rotation-dominated games")],
 }
 
@@ -447,7 +464,7 @@ CLAIMS = {"C1": (c1, "1 min"), "C2": (c2, "15 s"), "C3": (c3, "4 min"), "C4": (c
           "C10": (c10, "15 min / 4 jobs"), "C11": (c11, "3 min"), "C12": (c12, "8 min"),
           "C13": (c13, "4 min"), "C14": (c14, "6 min"), "C15": (c15, "15 min / 8 jobs"), "C16": (c16, "8 min"),
           "C17": (c17, "6 min"), "C18": (c18, "30 min / 4 jobs"), "C19": (c19, "30 min / 4 jobs"),
-          "C20": (c20, "30 min / 2 jobs"), "C21": (c21, "2 min"), "C22": (c22, "3 min")}
+          "C20": (c20, "30 min / 2 jobs"), "C21": (c21, "2 min"), "C22": (c22, "3 min"), "C23": (c23, "4 min")}
 
 
 def main():
