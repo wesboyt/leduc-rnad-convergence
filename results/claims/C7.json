@@ -1,0 +1,11 @@
+{
+ "claim": "C7",
+ "statement": "Momentum is a mechanism: with Adam on the same exact objective, beta1 = 0.9 ends > 3x worse than beta1 = 0 and > 2x worse than beta1 = 0.5.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "beta1=0.0": 0.04352394308606854,
+  "beta1=0.5": 0.07264157587245995,
+  "beta1=0.9": 0.383959722900214
+ },
+ "seconds": 48.8
+}

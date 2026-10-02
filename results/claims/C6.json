@@ -1,0 +1,17 @@
+{
+ "claim": "C6",
+ "statement": "On the IDENTICAL exact objective (node-only anchor, the baseline's magnet strength, refresh 500, floor 20), the optimizer decides convergence: schedule-free AdamW fails at every lr; plain SGD / logit steps converge.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "mirror": 0.010668248749744055,
+  "neurd_sgd_lr0.03": 0.018944604129004717,
+  "softmax_sgd_lr0.1": 0.06164081329630772,
+  "softmax_sfadamw_lr0.003": 4.710827226187911,
+  "softmax_adam_lr0.003": 0.383959722900214,
+  "softmax_sfadamw_lr0.01": 4.8008215172106485,
+  "softmax_adam_lr0.01": 1.2069700416737752,
+  "softmax_sfadamw_lr0.03": 5.912961769840983,
+  "softmax_adam_lr0.03": 2.9437821481718998
+ },
+ "seconds": 127.2
+}

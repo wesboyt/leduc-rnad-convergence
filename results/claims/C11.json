@@ -1,0 +1,11 @@
+{
+ "claim": "C11",
+ "statement": "The sampled rule's EXPECTED step vanishes (approximately) at the exact regularised equilibrium with clips off: its fixed point is the right one.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "grad_norm_uniform": 0.0820346440022378,
+  "grad_norm_at_qre": 0.0020985276558519238,
+  "frac_entries_absz_gt4": 0.044642857142857144
+ },
+ "seconds": 14.7
+}

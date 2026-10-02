@@ -1,0 +1,19 @@
+{
+ "claim": "C12",
+ "statement": "TIMING: with a FIXED magnet and EXACT Q, the sampled rule has not solved its regularised game after 16k steps (round-2 RMS log-prob error > 0.5, NashConv > 1.2x the exact QRE), while the exact reference solves the same game to 1% in < 2000 steps.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "alpha_chips": [
+   0.09501010941321601,
+   0.3287275357250808
+  ],
+  "nashconv_qre": 0.13574810012637312,
+  "reference_steps_to_1pct": 1000,
+  "sampled_nashconv_16k": 0.2288489563735296,
+  "sampled_rms_logerr_by_round": [
+   0.3439157159685606,
+   0.9020883824358163
+  ]
+ },
+ "seconds": 279.5
+}

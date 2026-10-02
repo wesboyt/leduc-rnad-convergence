@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+results/*
+!results/claims/
+results_reproduce_all.txt
+.pytest_cache/

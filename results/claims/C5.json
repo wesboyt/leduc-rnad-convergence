@@ -1,0 +1,10 @@
+{
+ "claim": "C5",
+ "statement": "The anchor applied only at the decision (raw continuation returns, the sampled rule's form) converges as well as R-NaD's trajectory-regularised values.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "raw_last5": 0.0016997469369582907,
+  "soft_last5": 0.0018912977028686605
+ },
+ "seconds": 71.3
+}

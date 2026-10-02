@@ -1,0 +1,11 @@
+{
+ "claim": "C4",
+ "statement": "The fixed pulls toward uniform (the baseline's eta_unif + alpha_ent) set a hard floor: their QRE has NashConv ~0.109 and a refreshing magnet cannot go below it while they are on.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "qre_tau": 0.1086520482260942,
+  "refresh_with_tau_min": 0.10865204822609556,
+  "refresh_with_tau_last": 0.10865204822609655
+ },
+ "seconds": 75.0
+}

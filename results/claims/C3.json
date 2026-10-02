@@ -1,0 +1,13 @@
+{
+ "claim": "C3",
+ "statement": "The reference (MMD + magnet refresh every 500 + log-prob floor 40) reaches NashConv < 0.01 by 60k steps. Without the floor probabilities underflow to exactly 0 and late NashConv is >= 3x higher (alpha 0.5, K 500).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "a0.2_floor40_final": 0.0006025091356038348,
+  "a0.5_nofloor_late_max": 0.2682241554270557,
+  "a0.5_floor20_late_max": 0.028400730116608403,
+  "a0.5_nofloor_min_p": 0.0,
+  "a0.5_floor20_min_p": 2.0611536202120503e-09
+ },
+ "seconds": 93.2
+}

@@ -1,0 +1,11 @@
+{
+ "claim": "C2",
+ "statement": "Exact MMD with a FIXED uniform magnet converges linearly to the QRE of temperature alpha: from step 2000 the fixed-point residual shrinks >= 5x per 1000 steps, and NashConv is constant to 1e-9 from 8000 to 12000.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "resid_ratio_per_1000_max": 0.14902776213437133,
+  "nashconv@8000": 0.1913846679535739,
+  "nashconv@12000": 0.1913846679574165
+ },
+ "seconds": 14.1
+}

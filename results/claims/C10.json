@@ -1,0 +1,10 @@
+{
+ "claim": "C10",
+ "statement": "The sampled rule's floor is NOT noise in the action values: with EXACT Q the SGD rule plateaus at the same level as with sampled Q (within 1.5x, both > 0.2).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "exactQ_last4_mean": 0.3509077525917068,
+  "sampledQ_last4_mean": 0.37667036278552707
+ },
+ "seconds": 448.4
+}

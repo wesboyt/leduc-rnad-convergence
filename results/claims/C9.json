@@ -1,0 +1,20 @@
+{
+ "claim": "C9",
+ "statement": "In the SAMPLED rule (full baseline step at eta_reg 0.2, refresh 500), schedule-free AdamW degrades to NashConv > 2, plain SGD stays < 0.6 (two seeds each, 16k steps).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sfadamw_final": [
+   3.344432661692977,
+   4.390778702579435
+  ],
+  "sgd_final": [
+   0.36952618503105455,
+   0.33218549579939693
+  ],
+  "sgd_reach_avg": [
+   0.1803225668322463,
+   0.18518629994616037
+  ]
+ },
+ "seconds": 490.0
+}

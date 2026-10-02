@@ -1,0 +1,10 @@
+{
+ "claim": "C1",
+ "statement": "The evaluator and the sampled harness are correct (both audits, every check with a negative control).",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "reference_audit_pass": true,
+  "harness_audit": "15/15 checks passed"
+ },
+ "seconds": 19.0
+}

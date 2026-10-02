@@ -1,0 +1,11 @@
+{
+ "claim": "C8",
+ "statement": "The outer loop's error budget is small: Gaussian noise of sd 0.3 (log-prob) on the magnet at each refresh raises NashConv > 10x over the exact refresh; sd 0.03 keeps it < 0.06.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sd=0.0": 0.012987184827076354,
+  "sd=0.03": 0.0404134064846108,
+  "sd=0.3": 0.33543619500331345
+ },
+ "seconds": 58.7
+}
