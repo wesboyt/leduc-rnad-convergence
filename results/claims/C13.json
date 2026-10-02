@@ -1,0 +1,21 @@
+{
+ "claim": "C13",
+ "statement": "SCHEDULE-FREE MECHANISM (exact, table): schedule-free SGD (interpolation beta 0.9) fails (> 1.0) on the same objective and learning rates at which plain SGD converges (< 0.2): the failure is schedule-free's averaging / interpolation, not Adam's normalisation.",
+ "verdict": "SUPPORTED",
+ "numbers": {
+  "sgd_lr0.1": 0.06164081329630772,
+  "sfsgd_lr0.1": 3.034209125890136,
+  "sfsgd_lr0.03": 7.187850264461792
+ },
+ "seconds": 43.8,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "BOUNDARY: averaging/interpolation breaks last-iterate game dynamics"
+  },
+  {
+   "paper": "Sokota+ 2023 MMD",
+   "relation": "BOUNDARY: the objective needs a mirror-like step"
+  }
+ ]
+}
