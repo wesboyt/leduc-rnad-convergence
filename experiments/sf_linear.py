@@ -47,10 +47,10 @@ def run(opt, omega, lam=1.0, gamma=0.005, steps=20000, d=8, seed=0, warmup=0):
     return float(p.detach().norm()) / w0
 
 
-def grid(omegas=(0.0, 1.0, 10.0, 30.0), gamma=0.005):
+def grid(omegas=(0.0, 1.0, 10.0, 30.0), gamma=0.005, d=8, seed=0, steps=20000):
     out = {}
     for opt in OPTS:
-        out[opt] = {str(om): run(opt, om, gamma=gamma) for om in omegas}
+        out[opt] = {str(om): run(opt, om, gamma=gamma, d=d, seed=seed, steps=steps) for om in omegas}
     return out
 
 

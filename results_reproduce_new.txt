@@ -1,0 +1,49 @@
+C13: SUPPORTED  (43.8s)  {"sgd_lr0.1": 0.06164081329630772, "sfsgd_lr0.1": 3.034209125890136, "sfsgd_lr0.03": 7.187850264461792}
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\process.py", line 254, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\process.py", line 203, in _process_chunk
+    return [fn(*args) for args in chunk]
+            ~~^^^^^^^
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\reproduce.py", line 50, in run_grad
+    _, c = M.grad_run(G, **kw)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\lrc\reference.py", line 248, in grad_run
+    o = make_optimizer(params, opt, lr, betas=betas, eps=eps, warmup=warmup)
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\lrc\policy.py", line 90, in make_optimizer
+    o = schedulefree.SGDScheduleFree(params, lr=lr, momentum=betas[0], warmup_steps=warmup, weight_decay=0.0)
+  File "C:\Users\tieyo\Projects\pythonProject\.venv314t\Lib\site-packages\schedulefree\sgd_schedulefree.py", line 61, in __init__
+    raise ValueError("Momentum must be between 0 and 1 exclusive: {}".format(momentum))
+ValueError: Momentum must be between 0 and 1 exclusive: 0.0
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\reproduce.py", line 452, in <module>
+    t0 = time.time()
+    ^^
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\reproduce.py", line 439, in main
+    ap.add_argument("claims", nargs="*")
+                  ^^^^^^^^^^
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\reproduce.py", line 275, in c14
+    res = pmap(run_grad, [arms[n] for n in names], jobs)
+  File "C:\Users\tieyo\Projects\leduc-rnad-convergence\reproduce.py", line 69, in pmap
+    return list(ex.map(fn, items))
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\process.py", line 712, in _chain_from_iterable_of_lists
+    for element in iterable:
+                   ^^^^^^^^
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 645, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 312, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 454, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\tieyo\Projects\pythonProject\.uvpython\cpython-3.14.7+freethreaded-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 396, in __get_result
+    raise self._exception
+ValueError: Momentum must be between 0 and 1 exclusive: 0.0

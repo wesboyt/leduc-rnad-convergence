@@ -1,0 +1,48 @@
+{
+ "claim": "C21",
+ "statement": "MECHANISM (linearised regularised game F(w) = (lambda I + omega J) w, lambda = 1, step 0.005 at which SGD converges for every omega tested): schedule-free SGD and schedule-free AdamW converge in MINIMISATION (omega = 0: |w_T|/|w_0| < 1e-3 after 20k steps) but NOT in rotation-dominated games (omega = 30: > 0.1), while SGD converges at every omega (< 1e-3).",
+ "verdict": "REFUTED",
+ "numbers": {
+  "sgd": {
+   "0.0": 2.8947756746419496e-44,
+   "1.0": 3.7263280374080153e-44,
+   "10.0": 2.5974491240654433e-33,
+   "30.0": 1.1416967075408426e+54
+  },
+  "adam_b1_0": {
+   "0.0": 0.0,
+   "1.0": 0.0015415507467453078,
+   "10.0": 0.021201002574989476,
+   "30.0": 0.06041083863410307
+  },
+  "adam_b1_0.9": {
+   "0.0": 2.8888729413011543e-05,
+   "1.0": 0.028787982159305996,
+   "10.0": 0.3620621902610743,
+   "30.0": 0.7341645779018462
+  },
+  "sfsgd_b0.9": {
+   "0.0": 5.942572259074121e-05,
+   "1.0": 0.11220316202934119,
+   "10.0": 16665526.512289142,
+   "30.0": 2373687631406.275
+  },
+  "sfadamw_b0.9": {
+   "0.0": 0.00014875578149857943,
+   "1.0": 0.00043605049571536963,
+   "10.0": 13.147967712139412,
+   "30.0": 14.23151929384038
+  }
+ },
+ "seconds": 94.9,
+ "papers": [
+  {
+   "paper": "Defazio+ 2024 schedule-free",
+   "relation": "BOUNDARY test: minimisation (designed regime) vs rotation-dominated games"
+  },
+  {
+   "paper": "Gidel+ 2019 VI; Daskalakis & Panageas 2018",
+   "relation": "rotational vector fields and optimizer stability"
+  }
+ ]
+}

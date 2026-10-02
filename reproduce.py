@@ -266,11 +266,12 @@ def c13(jobs):
 def c14(jobs):
     """DOSE-RESPONSE (exact, table): for schedule-free SGD (lr 0.1) and schedule-free AdamW (lr 0.01), NashConv at
     interpolation beta = 0.9 is > 5x that at beta = 0 (where schedule-free acts at its base iterate), and beta = 0
-    itself converges (< 0.3)."""
+    itself converges (< 0.3). [beta = 0 is run as 1e-6 for both: the library's SGD variant rejects exactly 0; the
+    first run crashed on that before producing any number.]"""
     arms = {}
-    for b in (0.0, 0.5, 0.9):
-        arms[f"sfsgd_b{b}"] = dict(_EX, opt="sfsgd", pg="softmax", lr=0.1, betas=(b, 0.999))
-        arms[f"sfadamw_b{b}"] = dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(b, 0.999))
+    for b, lab in ((1e-6, "0.0"), (0.5, "0.5"), (0.9, "0.9")):
+        arms[f"sfsgd_b{lab}"] = dict(_EX, opt="sfsgd", pg="softmax", lr=0.1, betas=(b, 0.999))
+        arms[f"sfadamw_b{lab}"] = dict(_EX, opt="sfadamw", pg="softmax", lr=0.01, betas=(b, 0.999))
     names = list(arms)
     res = pmap(run_grad, [arms[n] for n in names], jobs)
     num = {n: _last(c, 5) for n, c in zip(names, res)}
@@ -388,6 +389,20 @@ def c21(jobs):
     return res, ok
 
 
+def c22(jobs):
+    """MECHANISM, CORRECTED (registered AFTER C21's result: C21's step 0.005 violated SGD's own stability bound at
+    omega = 30, so its precondition failed). Fresh dimension (16), seed (1) and omega grid {0, 3, 10, 20}; step =
+    half of SGD's bound at the largest omega (0.5 * 2/(1+400)); 40k steps. SGD converges at every omega (< 1e-3);
+    schedule-free SGD and AdamW converge at omega = 0 (< 1e-3) and do NOT at omega = 20 (> 0.1)."""
+    import sf_linear as S
+    gamma = 0.5 * 2.0 / (1.0 + 20.0 ** 2)
+    res = S.grid(omegas=(0.0, 3.0, 10.0, 20.0), gamma=gamma, d=16, seed=1, steps=40000)
+    ok = (all(res["sgd"][k] < 1e-3 for k in res["sgd"])
+          and all(res[o]["0.0"] < 1e-3 and res[o]["20.0"] > 0.1 for o in ("sfsgd_b0.9", "sfadamw_b0.9")))
+    res["gamma"] = gamma
+    return res, ok
+
+
 # claim -> [(paper, relation)]; relation: CONFIRMED (the paper's prediction reproduces) | BOUNDARY (the guarantee does
 # not carry over once a named hypothesis is dropped: refutes an EXTRAPOLATION, not the paper). docs/PAPERS.md.
 PAPERS = {
@@ -424,6 +439,7 @@ PAPERS = {
     "C20": [("Sokota+ 2023 MMD", "test: temperature annealing instead of a moving magnet")],
     "C21": [("Defazio+ 2024 schedule-free", "BOUNDARY test: minimisation (designed regime) vs rotation-dominated games"),
             ("Gidel+ 2019 VI; Daskalakis & Panageas 2018", "rotational vector fields and optimizer stability")],
+    "C22": [("Defazio+ 2024 schedule-free", "BOUNDARY test (corrected C21): minimisation vs rotation-dominated games")],
 }
 
 CLAIMS = {"C1": (c1, "1 min"), "C2": (c2, "15 s"), "C3": (c3, "4 min"), "C4": (c4, "4 min"), "C5": (c5, "4 min"),
@@ -431,7 +447,7 @@ CLAIMS = {"C1": (c1, "1 min"), "C2": (c2, "15 s"), "C3": (c3, "4 min"), "C4": (c
           "C10": (c10, "15 min / 4 jobs"), "C11": (c11, "3 min"), "C12": (c12, "8 min"),
           "C13": (c13, "4 min"), "C14": (c14, "6 min"), "C15": (c15, "15 min / 8 jobs"), "C16": (c16, "8 min"),
           "C17": (c17, "6 min"), "C18": (c18, "30 min / 4 jobs"), "C19": (c19, "30 min / 4 jobs"),
-          "C20": (c20, "30 min / 2 jobs"), "C21": (c21, "2 min")}
+          "C20": (c20, "30 min / 2 jobs"), "C21": (c21, "2 min"), "C22": (c22, "3 min")}
 
 
 def main():
